@@ -1,0 +1,7 @@
+#Wed Sep 09 21:25:44 WIB 2026
+base.1=C\:\\Users\\alfia\\Documents\\chatPOS\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes2.dex
+path.1=classes2.dex
+base.0=C\:\\Users\\alfia\\Documents\\chatPOS\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes.dex
+renamed.1=classes2.dex
+renamed.0=classes.dex
+path.0=classes.dex

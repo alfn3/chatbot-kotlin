@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>POS Konter - Cetak Struk &amp; Preview Nota Terpisah</title>
+<!-- Google Fonts: Plus Jakarta Sans & Space Mono for thermal receipt typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff4ff',
+              100: '#dbe7fe',
+              200: '#bfd5fe',
+              500: '#1e60f2',
+              600: '#154ecc',
+              700: '#103ca4',
+            },
+            surface: {
+              dim: '#cbdbf5',
+              bg: '#f8f9ff',
+              card: '#ffffff'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            receipt: ['"Space Mono"', 'monospace', 'Courier New']
+          },
+          boxShadow: {
+            'sheet': '0 -10px 30px -5px rgba(0, 0, 0, 0.25)',
+            'paper': '0 3px 12px rgba(16, 24, 40, 0.08)'
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Styles for Receipt Serrated Border & Mobile Frame -->
+<style data-purpose="custom-receipt-edges">
+    .receipt-sawtooth-bottom {
+      background: linear-gradient(135deg, transparent 5px, #ffffff 5px),
+                  linear-gradient(225deg, transparent 5px, #ffffff 5px);
+      background-size: 14px 10px;
+      background-repeat: repeat-x;
+      background-position: bottom left;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 flex justify-center items-center min-h-screen p-0 m-0 font-sans text-slate-800 antialiased selection:bg-brand-100">
+<!-- BEGIN: MobileDeviceFrame -->
+<main class="relative w-full max-w-[390px] h-[844px] bg-[#f8f9ff] overflow-hidden flex flex-col shadow-2xl border border-slate-700/30 sm:rounded-[44px]" data-purpose="mobile-viewport-container">
+<!-- BEGIN: BackgroundChatScreen (Dimmed Underneath) -->
+<div class="absolute inset-0 flex flex-col bg-[#f4f7fb] pointer-events-none select-none filter blur-[1.5px] opacity-75" data-purpose="chat-background-blurred">
+<!-- iOS Status Bar Simulation -->
+<div class="h-11 px-7 flex items-center justify-between text-slate-800 text-xs font-semibold pt-1">
+<span>09:41</span>
+<div class="flex items-center space-x-1.5">
+<svg class="w-4 h-3.5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 20.24a1 1 0 001.41 1.41l2.63-.62C9.93 21.64 10.95 22 12 22c4.97 0 9-4.03 9-9s-4.03-9-9-9z"></path></svg>
+<svg class="w-3.5 h-3.5" fill="currentColor" viewbox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+<div class="w-5 h-2.5 border border-slate-700 rounded-sm p-0.5"><div class="w-full h-full bg-slate-700 rounded-2xs"></div></div>
+</div>
+</div>
+<!-- Top Header Bar -->
+<div class="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-base">T</div>
+<div>
+<h1 class="text-xs font-bold text-slate-900 tracking-tight">TOKO BERKAH CELL</h1>
+<p class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> ONLINE
+            </p>
+</div>
+</div>
+</div>
+<!-- Balance Strip -->
+<div class="mx-4 my-2.5 bg-white rounded-xl p-2.5 border border-slate-100 shadow-sm flex items-center justify-between text-xs">
+<div class="flex items-center space-x-2">
+<span class="text-slate-400">💳</span>
+<span class="text-slate-500 text-[11px]">Saldo:</span>
+<span class="font-bold text-slate-800 text-[11px]">Rp 1.417.000</span>
+<span class="bg-emerald-50 text-emerald-700 font-bold text-[9px] px-1.5 py-0.5 rounded">Aktif</span>
+</div>
+</div>
+<!-- Chat Bubble -->
+<div class="px-4 flex flex-col items-end my-1">
+<div class="bg-brand-500 text-white text-[11px] p-2.5 rounded-2xl rounded-tr-none max-w-[210px] leading-relaxed shadow-sm font-mono">
+          #cust001<br/>
+          S10.089512341234<br/>
+          D20.089500001234
+          <div class="text-[9px] text-brand-100 text-right mt-1">09:41 ✓✓</div>
+</div>
+</div>
+</div>
+<!-- END: BackgroundChatScreen -->
+<!-- Dimmed Backdrop Overlay -->
+<div class="absolute inset-0 bg-slate-900/40 transition-opacity" data-purpose="modal-dim-backdrop"></div>
+<!-- BEGIN: BottomSheetModal -->
+<section class="relative mt-auto w-full max-h-[92%] bg-white rounded-t-[28px] shadow-sheet flex flex-col z-20 overflow-hidden animate-in slide-in-from-bottom duration-300" data-purpose="thermal-print-bottom-sheet">
+<!-- Bottom Sheet Drag Handle -->
+<div class="w-full flex justify-center pt-2.5 pb-1">
+<div aria-hidden="true" class="w-10 h-1 rounded-full bg-slate-300"></div>
+</div>
+<!-- Modal Header -->
+<header class="px-4 pt-1 pb-3 flex items-start justify-between border-b border-slate-100">
+<div class="flex items-start gap-2.5">
+<!-- Thermal Printer Status Icon -->
+<div class="relative w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-brand-500 flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-white"></span>
+</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<h2 class="text-sm font-bold text-slate-900 leading-tight">Cetak Struk Transaksi</h2>
+</div>
+<p class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1 font-medium">
+<span class="font-semibold text-slate-700">#TRX-94821</span> • 2 Item (Rp33.000)
+            </p>
+<!-- Printer connection badge -->
+<div class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded bg-slate-100 text-[10px] text-slate-600 font-medium">
+<svg class="w-2.5 h-2.5 text-blue-600" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"></path></svg>
+<span>Thermal 58mm</span>
+<span class="text-slate-300">•</span>
+<span class="text-emerald-600 font-semibold">Terhubung</span>
+</div>
+</div>
+</div>
+<!-- Close Button -->
+<button aria-label="Tutup modal" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</header>
+<!-- Scrollable Modal Body -->
+<div class="overflow-y-auto px-4 py-3 space-y-3.5 custom-scrollbar text-slate-700 flex-1">
+<!-- BEGIN: PrintModeSelection -->
+<div data-purpose="print-mode-selector">
+<label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">PILIH MODE CETAK NOTA</label>
+<div class="grid grid-cols-2 gap-2">
+<!-- Option A: Nota Terpisah (Active) -->
+<div class="relative border-2 border-brand-500 bg-brand-50/40 rounded-xl p-2.5 flex flex-col justify-between cursor-pointer">
+<span class="absolute -top-2.5 left-2 bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm tracking-wide">
+                REKOMENDASI
+              </span>
+<div class="flex items-start space-x-2">
+<input checked="" class="mt-0.5 w-3.5 h-3.5 text-brand-500 focus:ring-brand-500 border-slate-300" name="print_mode" type="radio"/>
+<div>
+<h3 class="text-xs font-bold text-slate-900 leading-tight">Nota Terpisah</h3>
+<p class="text-[10px] text-slate-500 mt-1 leading-snug">
+                    Cetak 1 struk per item untuk tiap pembeli (2 struk).
+                  </p>
+</div>
+</div>
+</div>
+<!-- Option B: Nota Gabungan -->
+<div class="relative border border-slate-200 bg-white rounded-xl p-2.5 flex flex-col justify-between hover:border-slate-300 cursor-pointer">
+<div class="flex items-start space-x-2">
+<input class="mt-0.5 w-3.5 h-3.5 text-brand-500 focus:ring-brand-500 border-slate-300" name="print_mode" type="radio"/>
+<div>
+<h3 class="text-xs font-bold text-slate-700 leading-tight">Nota Gabungan</h3>
+<p class="text-[10px] text-slate-400 mt-1 leading-snug">
+                    1 struk rekap gabungan untuk semua item order.
+                  </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- END: PrintModeSelection -->
+<!-- BEGIN: ReceiptLivePreviewSection -->
+<div class="space-y-2" data-purpose="receipt-preview-area">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">PRATINJAU STRUK FISIK</span>
+<span class="text-[10px] text-slate-400 font-mono">58mm Standard ESC/POS</span>
+</div>
+<!-- Preview Segmented Tabs -->
+<div class="flex bg-slate-100 p-1 rounded-lg text-xs gap-1 font-medium">
+<button class="flex-1 py-1 px-2 rounded-md bg-white text-brand-600 font-bold shadow-xs text-center text-[11px] flex items-center justify-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+              Nota 1: Budi (Rp11.000)
+            </button>
+<button class="flex-1 py-1 px-2 rounded-md text-slate-500 hover:text-slate-800 text-center text-[11px]">
+              Nota 2: Lesti (Rp22.000)
+            </button>
+</div>
+<!-- Crisp Monospace Thermal Receipt Card -->
+<div class="bg-slate-200/70 p-2.5 rounded-xl flex justify-center">
+<div class="w-full max-w-[290px] bg-white rounded-t shadow-paper font-receipt text-[10px] text-slate-800 leading-tight border border-slate-200/80" data-purpose="receipt-paper">
+<!-- Paper Content -->
+<div class="p-3">
+<!-- Shop Header -->
+<div class="text-center border-b border-dashed border-slate-300 pb-2 mb-2">
+<div class="font-bold text-[12px] tracking-wider text-slate-900">TOKO BERKAH CELL</div>
+<div class="text-[9px] text-slate-600">Jl. Raya Pasar Minggu No. 42</div>
+<div class="text-[9px] text-slate-600">Telp/WA: 0812-3456-7890</div>
+</div>
+<!-- Transaction Meta -->
+<div class="text-[9.5px] border-b border-dashed border-slate-300 pb-2 mb-2 space-y-0.5">
+<div class="flex justify-between">
+<span class="text-slate-500">No. Trx</span>
+<span class="font-bold text-slate-800">TRX-94821-1</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Waktu</span>
+<span>24/10/2023 09:41</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Kasir</span>
+<span>Berkah 01</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-500">Pelanggan</span>
+<span class="font-bold text-slate-900">Budi</span>
+</div>
+</div>
+<!-- Item Detail -->
+<div class="border-b border-dashed border-slate-300 pb-2 mb-2 space-y-0.5">
+<div class="font-bold text-slate-900 text-[10.5px]">S10 - Pulsa Telkomsel 10K</div>
+<div class="flex justify-between text-slate-600 text-[9px]">
+<span>No. HP</span>
+<span class="font-bold">089512341234</span>
+</div>
+<div class="flex justify-between text-slate-600 text-[8.5px]">
+<span>SN</span>
+<span>409283401928491</span>
+</div>
+<div class="flex justify-between pt-1 font-bold text-slate-800 text-[10px]">
+<span>1 x Rp 11.000</span>
+<span>Rp 11.000</span>
+</div>
+</div>
+<!-- Totals -->
+<div class="border-b border-dashed border-slate-300 pb-2 mb-2 space-y-0.5">
+<div class="flex justify-between text-xs font-bold text-slate-900">
+<span>TOTAL</span>
+<span>Rp 11.000</span>
+</div>
+<div class="flex justify-between text-[9px] text-slate-600">
+<span>Metode Bayar</span>
+<span>TUNAI</span>
+</div>
+<div class="flex justify-between text-[9px] text-slate-600">
+<span>Status</span>
+<span class="font-bold text-emerald-700">LUNAS / BERHASIL</span>
+</div>
+</div>
+<!-- Receipt Footer Note -->
+<div class="text-center text-[8.5px] text-slate-500 space-y-0.5 pt-0.5">
+<p>Terima kasih atas kunjungan Anda</p>
+<p class="font-medium text-slate-400">Simpan struk ini sbg bukti sah</p>
+</div>
+</div>
+<!-- Thermal Sawtooth Cut Edge -->
+<div class="h-2.5 w-full receipt-sawtooth-bottom border-b border-slate-200"></div>
+</div>
+</div>
+</div>
+<!-- END: ReceiptLivePreviewSection -->
+<!-- BEGIN: QuickPrinterSettings -->
+<div class="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70 space-y-2" data-purpose="printer-quick-settings">
+<!-- Width selector & status -->
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-700">Lebar Kertas Thermal</span>
+<div class="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+<button class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-brand-500 text-white shadow-xs">58 mm</button>
+<button class="px-2.5 py-0.5 rounded text-[11px] font-medium text-slate-500 hover:text-slate-900">80 mm</button>
+</div>
+</div>
+<!-- Privacy Toggle: Sembunyikan saldo -->
+<label class="flex items-center justify-between cursor-pointer pt-1 border-t border-slate-200/60">
+<span class="text-[11px] text-slate-600 font-medium">Sembunyikan Sisa Saldo Konter di Struk</span>
+<input checked="" class="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 border-slate-300" type="checkbox"/>
+</label>
+</div>
+<!-- END: QuickPrinterSettings -->
+</div>
+<!-- BEGIN: PinnedActionButtons -->
+<footer class="p-4 bg-white border-t border-slate-100 flex flex-col space-y-2" data-purpose="bottom-action-tray">
+<!-- Main Print Button -->
+<button class="w-full bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-brand-500/25 transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-sm">Cetak Semua Nota Terpisah (2 Struk)</span>
+</button>
+<!-- Cancel Button -->
+<button class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2.5 px-4 rounded-xl text-xs transition" type="button">
+          Batal
+        </button>
+</footer>
+<!-- END: PinnedActionButtons -->
+</section>
+<!-- END: BottomSheetModal -->
+<!-- iOS Home Indicator -->
+<div class="absolute bottom-1 left-0 right-0 flex justify-center pointer-events-none z-30">
+<div class="w-32 h-1 bg-slate-900/40 rounded-full"></div>
+</div>
+</main>
+<!-- END: MobileDeviceFrame -->
+</body></html>

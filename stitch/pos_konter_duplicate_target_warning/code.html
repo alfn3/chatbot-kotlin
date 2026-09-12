@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>POS Konter - Duplicate Target Warning</title>
+<!-- Tailwind CSS CDN with forms and container plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#1967d2',
+              'blue-hover': '#1557b0',
+              amber: '#d97706',
+              'amber-dark': '#b45309',
+              'amber-light': '#fef3c7',
+              'amber-border': '#fcd34d'
+            }
+          }
+        }
+      }
+    };
+  </script>
+<style data-purpose="base-setup">
+    /* General styles to emulate iOS mobile viewport */
+    body {
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"></head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen p-0 sm:p-4 select-none">
+<!-- BEGIN: MobileDeviceContainer -->
+<div class="w-full max-w-[390px] h-[844px] bg-[#f8fafc] flex flex-col justify-between relative shadow-2xl rounded-[40px] overflow-hidden border border-gray-200" data-purpose="mobile-frame">
+<!-- BEGIN: TopBarArea -->
+<div class="w-full bg-white z-20 flex-shrink-0">
+<!-- iOS Status Bar -->
+<div class="h-11 px-7 flex items-center justify-between text-black text-xs font-semibold tracking-tight pt-1" data-purpose="status-bar">
+<span class="">09:41</span>
+<div class="flex items-center space-x-2">
+<!-- Signal Icon -->
+<svg class="w-4 h-3.5 fill-current" viewBox="0 0 17 12">
+<rect height="4" rx="0.5" width="2.5" x="0" y="8"></rect>
+<rect height="6" rx="0.5" width="2.5" x="3.5" y="6"></rect>
+<rect height="8.5" rx="0.5" width="2.5" x="7" y="3.5"></rect>
+<rect height="11.5" rx="0.5" width="2.5" x="10.5" y="0.5"></rect>
+</svg>
+<!-- Wifi Icon -->
+<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 16 12">
+<path d="M8 12a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6zm-4.7-4.1a6.6 6.6 0 0 1 9.4 0 .8.8 0 1 1-1.1 1.1 5 5 0 0 0-7.2 0 .8.8 0 0 1-1.1-1.1zm-2.8-2.8a10.5 10.5 0 0 1 15 0 .8.8 0 1 1-1.1 1.1 9 9 0 0 0-12.8 0 .8.8 0 1 1-1.1-1.1z"></path>
+</svg>
+<!-- Battery Icon -->
+<div class="w-5 h-2.5 border border-black rounded-sm p-0.5 flex items-center">
+<div class="w-full h-full bg-black rounded-xs"></div>
+</div>
+</div>
+</div>
+<!-- Main Navigation Header -->
+<header class="h-14 px-4 border-b border-gray-100 flex items-center justify-between" data-purpose="app-header">
+<div class="flex items-center space-x-3">
+<!-- Profile Avatar -->
+<div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+            T
+          </div>
+<!-- Title and Status Indicator -->
+<div class="flex flex-col">
+<h1 class="text-xs font-bold text-gray-900 tracking-wide uppercase">TOKO BERKAH CELL</h1>
+<div class="flex items-center space-x-1.5 mt-0.5"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span><span class="text-[11px] font-semibold text-emerald-600 tracking-wider">ONLINE</span></div>
+</div>
+</div>
+<!-- Action Icons: Search & More -->
+<div class="flex items-center space-x-4 text-gray-700">
+<button aria-label="Search" class="p-1 rounded-full hover:bg-gray-100" type="button">
+<svg class="w-5 h-5 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<line x1="16" x2="21" y1="16" y2="21"></line>
+</svg>
+</button>
+<button aria-label="Menu" class="p-1 rounded-full hover:bg-gray-100" type="button">
+<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+<circle cx="12" cy="5" r="1.75"></circle>
+<circle cx="12" cy="12" r="1.75"></circle>
+<circle cx="12" cy="19" r="1.75"></circle>
+</svg>
+</button>
+</div>
+</header>
+</div>
+<!-- END: TopBarArea -->
+<!-- BEGIN: MainContentArea -->
+<main class="flex-1 overflow-y-auto px-3.5 py-4" data-purpose="chat-feed"><div class="mb-3 bg-blue-50/80 border border-blue-100 rounded-xl px-3 py-2 flex items-center justify-between text-xs"><div class="flex items-center space-x-1.5 text-blue-900 font-medium"><span class="material-symbols-outlined text-[16px] text-blue-600">account_balance_wallet</span><span class="">Saldo: <strong class="font-bold text-blue-700">Rp 1.450.000</strong></span></div><span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">Aktif</span></div><div class="flex justify-center my-3"><span class="text-[11px] font-medium text-gray-500 bg-gray-200/80 px-2.5 py-0.5 rounded-full">Hari ini</span></div><div class="flex flex-col items-end mb-4"><div class="max-w-[320px] w-full bg-[#1e60f2] text-white rounded-2xl rounded-tr-none shadow-md overflow-hidden"><div class="px-3.5 py-2.5 border-b border-blue-400/40 flex items-center justify-between"><button type="button" class="flex items-center space-x-1 bg-white/20 hover:bg-white/30 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors"><span class="">Pelanggan</span><span class="material-symbols-outlined text-[14px]">expand_more</span></button><span class="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full tracking-wide uppercase">#cust001</span></div><div class="p-2.5"><div class="bg-amber-500/20 border border-amber-300/40 rounded-lg p-2 flex items-start space-x-2 mb-2 text-amber-100"><span class="material-symbols-outlined text-[16px] text-amber-300 flex-shrink-0 mt-0.5">warning</span><p class="text-[11px] font-medium text-white leading-snug">Nomor tujuan sama terdeteksi! Item akan diproses berurutan.</p></div><div class="bg-white rounded-xl p-2.5 text-gray-900 shadow-sm"><div class="space-y-2 divide-y divide-gray-100"><div class="pt-1 first:pt-0"><div class="flex items-start justify-between"><div class="font-bold text-xs text-gray-900 leading-tight">S10.089512341234 (Budi)</div><div class="font-bold text-xs text-blue-600">Rp11.000</div></div><div class="text-[11px] text-gray-500 mt-0.5">Pulsa Telkomsel 10K</div></div><div class="pt-2"><div class="flex items-start justify-between"><div class="font-bold text-xs text-gray-900 leading-tight">S20.089512341234 (Budi)</div><div class="font-bold text-xs text-blue-600">Rp22.000</div></div><div class="text-[11px] text-gray-500 mt-0.5">Pulsa Telkomsel 20K</div></div></div><div class="mt-2.5 pt-2 border-t border-gray-200 flex items-center justify-between text-xs font-bold"><span class="text-gray-600">Total (2 Item)</span><span class="text-blue-700 text-sm">Rp33.000</span></div></div><div class="grid grid-cols-2 gap-2 mt-2.5"><button type="button" class="py-1.5 px-2 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg transition-colors uppercase tracking-wider">BATALKAN</button><button type="button" class="py-1.5 px-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow transition-colors uppercase tracking-wider">TETAP PROSES</button></div></div><div class="px-3 pb-2 pt-0.5 flex items-center justify-end space-x-1.5 text-[10px] text-blue-100"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="font-medium">Draft</span><span class="opacity-75">•</span><span class="">09:41</span><span class="material-symbols-outlined text-[12px] opacity-80">done_all</span></div></div></div></main>
+<!-- END: MainContentArea -->
+<!-- BEGIN: BottomPinnedInputArea -->
+<div class="w-full bg-white border-t border-gray-200 px-3.5 pt-2.5 pb-6 flex-shrink-0" data-purpose="bottom-bar">
+<div class="flex items-center space-x-2">
+<!-- Attachment Icon -->
+<button aria-label="Attachment" class="text-gray-500 hover:text-gray-700 p-1 flex-shrink-0" type="button">
+<svg class="w-5 h-5 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+</svg>
+</button>
+<!-- Message/Number Input Field -->
+<div class="flex-1 relative flex items-center">
+<input class="w-full bg-white border border-gray-300 rounded-full py-2 pl-3.5 pr-9 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ketik nomor HP / ID Pelanggan..." type="text">
+<!-- Card/Wallet Mini Icon inside input -->
+<div class="absolute right-3 text-gray-400">
+<svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+<rect height="14" rx="2" width="20" x="2" y="5"></rect>
+<line x1="2" x2="22" y1="10" y2="10"></line>
+</svg>
+</div>
+</div>
+<!-- Send Button -->
+<button aria-label="Kirim" class="w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-sm flex-shrink-0 transition-colors" type="button">
+<svg class="w-4 h-4 fill-current transform rotate-45 -translate-y-0.5 -translate-x-0.5" viewBox="0 0 24 24">
+<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+</svg>
+</button>
+</div>
+<!-- iOS Home Bar Indicator -->
+<div class="w-32 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
+</div>
+<!-- END: BottomPinnedInputArea -->
+</div>
+<!-- END: MobileDeviceContainer -->
+
+
+</body></html>
