@@ -36,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chatpos.ui.theme.PrimaryLight
+import com.example.chatpos.ui.theme.ErrorDark
+import com.example.chatpos.ui.theme.ErrorContainer
 import com.example.chatpos.ui.utils.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +49,7 @@ fun PinConfirmationBottomSheet(
     onPinSuccess: (String) -> Unit
 ) {
     var pin by remember { mutableStateOf("") }
+    var pinError by remember { mutableStateOf<String?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -78,6 +81,14 @@ fun PinConfirmationBottomSheet(
                 ),
                 color = Color(0xFF0F172A)
             )
+            pinError?.let { error ->
+                Text(
+                    text = error,
+                    modifier = Modifier.padding(top = 10.dp),
+                    color = ErrorDark,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Total $itemCount transaksi: ${CurrencyFormatter.formatRupiah(totalAmount)}",
@@ -124,7 +135,10 @@ fun PinConfirmationBottomSheet(
                                 .clip(CircleShape)
                                 .clickable {
                                     when (key) {
-                                        "DEL" -> if (pin.isNotEmpty()) pin = pin.dropLast(1)
+                                        "DEL" -> {
+                                            pinError = null
+                                            if (pin.isNotEmpty()) pin = pin.dropLast(1)
+                                        }
                                         "BIO" -> {
                                             pin = "1234"
                                             onPinSuccess(pin)
@@ -133,7 +147,12 @@ fun PinConfirmationBottomSheet(
                                             if (pin.length < 4) {
                                                 pin += key
                                                 if (pin.length == 4) {
-                                                    onPinSuccess(pin)
+                                                    if (pin == "1234") {
+                                                        onPinSuccess(pin)
+                                                    } else {
+                                                        pinError = "PIN Salah. Silakan coba lagi."
+                                                        pin = ""
+                                                    }
                                                 }
                                             }
                                         }

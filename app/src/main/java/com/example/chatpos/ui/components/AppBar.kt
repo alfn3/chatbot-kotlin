@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,7 +40,6 @@ fun ChatPOSAppBar(
     isOnline: Boolean = true,
     showOnline: Boolean = false,
     onBackClick: (() -> Unit)? = null,
-    onSearchClick: () -> Unit = {},
     onMenuClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -109,13 +107,6 @@ fun ChatPOSAppBar(
 
             // Right: Actions
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onSearchClick, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Cari Transaksi",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
                 IconButton(onClick = onMenuClick, modifier = Modifier.size(36.dp)) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,

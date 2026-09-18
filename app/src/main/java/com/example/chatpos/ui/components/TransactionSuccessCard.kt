@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,16 +61,20 @@ fun TransactionSuccessCard(
     result: OtomaxBatchResult,
     onPrintReceipt: () -> Unit = {},
     onShareWhatsApp: () -> Unit = {},
+    isContactChat: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showActions by remember { mutableStateOf(false) }
+    val cardBackground = if (isContactChat) Color(0xFFEFF6FF) else Color.White
+    val cardBorder = if (isContactChat) Color(0xFFBFDBFE) else DividerColor
+    val actionColor = if (isContactChat) Color(0xFF3B82F6) else SuccessGreen
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 6.dp)
             .clickable { showActions = !showActions },
-        horizontalArrangement = Arrangement.Start
+        horizontalArrangement = if (isContactChat) Arrangement.End else Arrangement.Start
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(0.90f)
@@ -78,8 +83,8 @@ fun TransactionSuccessCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White)
-                    .border(1.dp, DividerColor, RoundedCornerShape(16.dp))
+                    .background(cardBackground)
+                    .border(1.dp, cardBorder, RoundedCornerShape(16.dp))
                     .padding(14.dp)
             ) {
                 Column {
@@ -99,7 +104,7 @@ fun TransactionSuccessCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
+                                    contentDescription = "Transaksi berhasil",
                                     tint = SuccessGreen,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -151,7 +156,7 @@ fun TransactionSuccessCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${item.productCode} • ${formatSavedContactDestination(item.destination)}",
+                                    text = "${item.productCode} • ${maskDestination(item.destination)}",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
@@ -284,7 +289,7 @@ fun TransactionSuccessCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Print,
-                            contentDescription = null,
+                            contentDescription = "Cetak struk",
                             modifier = Modifier.size(16.dp),
                             tint = Color(0xFF0F172A)
                         )
@@ -302,17 +307,17 @@ fun TransactionSuccessCard(
                         onClick = onShareWhatsApp,
                         modifier = Modifier.weight(1f).height(38.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen)
+                        colors = ButtonDefaults.buttonColors(containerColor = actionColor)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = null,
+                            imageVector = if (isContactChat) Icons.Default.Replay else Icons.Default.Share,
+                            contentDescription = if (isContactChat) "Ulangi transaksi" else "Kirim nota ke WhatsApp",
                             modifier = Modifier.size(16.dp),
                             tint = Color.White
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Kirim WA",
+                            text = if (isContactChat) "Ulangi Trx" else "Kirim WA",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp
@@ -334,4 +339,14 @@ private fun formatReceiptTimestamp(timestamp: String): String {
     } ?: parts.firstOrNull().orEmpty()
     val time = parts.getOrNull(1)?.split(":")?.take(2)?.joinToString(":").orEmpty()
     return listOf(date, time).filter { it.isNotBlank() }.joinToString(" ")
+}
+
+private fun maskDestination(destination: String): String {
+    val digits = destination.filter(Char::isDigit)
+    if (digits.length <= 7) return destination
+    val masked = "${digits.take(4)}...${digits.takeLast(3)}"
+    val contact = formatSavedContactDestination(destination)
+        .substringAfter(" (", missingDelimiterValue = "")
+        .removeSuffix(")")
+    return if (contact.isBlank()) masked else "$masked ($contact)"
 }

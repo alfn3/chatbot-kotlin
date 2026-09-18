@@ -27,6 +27,7 @@ sealed class ChatMessage(
         val customerTag: String = "#cust001",
         val isProcessed: Boolean = false,
         val isSending: Boolean = false,
+        val hasProcessingError: Boolean = false,
         val duplicateWarningMinutes: Int? = null,
         override val timeString: String = "09:41"
     ) : ChatMessage(id, timeString)
@@ -62,6 +63,46 @@ sealed class ChatMessage(
         val replyText: String,
         val customerTag: String = "#cust001",
         val replyTimeString: String = "09:41",
+        override val timeString: String = "09:41"
+    ) : ChatMessage(id, timeString)
+
+    data class ErrorBatchReceiptMessage(
+        override val id: String = UUID.randomUUID().toString(),
+        val batchResult: OtomaxBatchResult,
+        val errorMessage: String,
+        val customerTag: String = "#cust001",
+        override val timeString: String = "09:41"
+    ) : ChatMessage(id, timeString)
+
+    data class CustomerIncomingMessage(
+        override val id: String = UUID.randomUUID().toString(),
+        val customerNumber: String,
+        val text: String,
+        override val timeString: String = "09:41"
+    ) : ChatMessage(id, timeString)
+
+    data class IncomingTransactionRequest(
+        override val id: String = UUID.randomUUID().toString(),
+        val customerNumber: String,
+        val command: String,
+        val productLabel: String,
+        override val timeString: String = "09:41"
+    ) : ChatMessage(id, timeString)
+
+    enum class ExpenseAttachmentState {
+        NONE, UPLOADING, SUCCESS, FAILED
+    }
+
+    data class ExpenseCardMessage(
+        override val id: String = UUID.randomUUID().toString(),
+        val rawCommand: String = "",
+        val category: String,
+        val amount: Long,
+        val note: String,
+        val attachmentState: ExpenseAttachmentState = ExpenseAttachmentState.NONE,
+        val attachmentName: String? = null,
+        val isConfirmed: Boolean = false,
+        val isCancelled: Boolean = false,
         override val timeString: String = "09:41"
     ) : ChatMessage(id, timeString)
 

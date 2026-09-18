@@ -1,104 +1,229 @@
-# 🚀 Dokumen Perencanaan Berkala: ChatPOS (Kotlin + OtomaX)
+# Rencana Pengembangan ChatPOS
 
-Dokumen ini merupakan cetak biru (blueprint) dan rencana kerja bertahap untuk pengembangan aplikasi **ChatPOS**, aplikasi Point-of-Sale (POS) dan transaksi elektronik berbasis chat interaktif dalam bahasa pemrograman **Kotlin (Jetpack Compose)** yang terintegrasi dengan engine server pulsa & PPOB **OtomaX**.
+## Fokus Saat Ini: Fase 1 — UI/UX dan Alur Transaksi
 
----
+**Platform:** Android  
+**Teknologi:** Kotlin, Jetpack Compose, Material 3  
+**Package:** `com.example.chatpos`  
+**Status:** UI utama dan alur demo transaksi sudah terpasang; integrasi layanan eksternal belum menjadi bagian Fase 1.
 
-## 📌 1. Visi & Arsitektur Utama
-
-ChatPOS menggabungkan kecepatan antarmuka berbasis pesan (seperti Telegram/WhatsApp) dengan kepastian data finansial modern. Kasir konter dapat mengetik perintah singkat (misal: `#cust001 S10.08951234`), memilih dari grid nominal cepat, atau membiarkan sistem menyarankan nomor pelanggan langganan secara cerdas.
-
-```mermaid
-flowchart TD
-    subgraph UI_UX ["Antarmuka Kasir (Stitch Design System)"]
-        A["Chat Stream & Input Bar"] --> B["Smart Suggest & Product Grid"]
-        B --> C["Batch Transaction Card"]
-        C --> D["Duplicate Warning & 4-Digit PIN"]
-        D --> E["Struk Thermal & WhatsApp Share"]
-    end
-
-    subgraph CORE_ENGINE ["ChatPOS Client Core (Kotlin MVVM/MVI)"]
-        UI_UX --> F["ChatPOSViewModel (StateFlow)"]
-        F --> G["OtomaX Command Parser & Validator"]
-        F --> H["Local Cache (Room DB & DataStore)"]
-    end
-
-    subgraph OTOMAX_GATEWAY ["OtomaX Integration Layer"]
-        G --> I["OtomaX IP Center / HTTP API"]
-        I --> J["OtomaX Engine (SMS/XMPP/IP Switcher)"]
-        J --> K["Biller & Operator Seluler"]
-        K --> J
-        J --> I
-        I --> F
-    end
-```
+Dokumen ini menjadi acuan kerja aktif untuk Fase 1. Isinya hanya mencatat kondisi aplikasi saat ini, perilaku UI yang harus dipertahankan, dan pekerjaan yang masih diperlukan agar prototipe UI/UX siap ditutup. Detail API OtomaX, database permanen, keamanan PIN, printer, dan deployment ditunda ke fase berikutnya.
 
 ---
 
-## 🗓️ 2. Roadmap Pengembangan Berkala
+## 1. Tujuan Fase 1
 
-### 🎨 FASE 1: Implementasi Tampilan & UI/UX (Sesuai Folder `stitch` & `implementasi plan`)
-> **Durasi:** Sprint 1 - 2 (Pondasi UI Lengkap)  
-> **Fokus:** Mengonversi 11 rancangan layar/komponen dari folder `stitch` ke Jetpack Compose murni.
+Menyelesaikan pengalaman kasir dari saat membuka ChatPOS sampai melihat hasil transaksi dalam satu alur yang mudah dipahami:
 
-**Revisi Fase 1 aktif:** welcome card hanya tampil sebelum ada transaksi, input chat memakai
-cursor otomatis di posisi akhir, hint input mengikuti tahap pengisian, submit chat membuat
-preview transaksi terlebih dahulu, dan tombol **Proses Sekarang** baru meneruskan satu batch
-ke sistem. Balasan bot diringkas menjadi satu card untuk setiap pengiriman. Bubble chat
-mengikuti pola WhatsApp dengan warna pengirim dan sistem yang berbeda, tombol aksi berada di
-bawah bubble dan tampil saat card balasan dipilih, serta assistant input menyediakan kategori
-produk selain Pulsa.
+1. Kasir membuka halaman ChatPOS dan melihat identitas toko serta saldo.
+2. Kasir memilih kategori/produk atau mengetik perintah transaksi.
+3. Sistem membantu mengisi kode produk, nomor tujuan, kontak, dan format nomor.
+4. Kasir mengirim input untuk membuat **draft transaksi**, bukan langsung memprosesnya.
+5. Kasir dapat memeriksa, mengedit, menyalin, membatalkan, atau memproses draft.
+6. Sistem menampilkan warning duplikat dan konfirmasi PIN sebelum proses.
+7. Sistem menampilkan satu balasan hasil untuk satu batch transaksi.
+8. Kasir dapat membuka pratinjau nota, memilih format pembagian nota WhatsApp, dan melihat riwayat.
 
-**Revisi Fase 1 lanjutan:** card draft memakai tombol **Edit** untuk mengembalikan nilai
-transaksi ke input chat, bubble balasan sistem berwarna putih dan rata kiri, bubble transaksi
-menampilkan identitas pelanggan `#cust001`, dan pengiriman WhatsApp menyediakan pilihan satu
-nota gabungan atau nota terpisah untuk setiap item. Ikon lampiran dan keypad di input chat
-dihapus. Header card draft menampilkan `#cust001` sebagai identitas utama dengan garis
-pemisah, header balasan sistem menggunakan label **BALASAN SERVER**, waktu memakai format
-`HH:mm`, dan setiap item transaksi menampilkan statusnya.
-
-| Modul Layar / Komponen | Referensi Folder `stitch` | Deskripsi & Komponen Compose |
-| :--- | :--- | :--- |
-| **Design System & Tokens** | `conversational_retail_pos` | `Color.kt`, `Type.kt` (Plus Jakarta Sans + Inter), `Shape.kt`, `Dimensions.kt`, `Theme.kt` |
-| **Main Screen & App Bar** | `pos_konter_chat_mobile_pos_app` | Header "TOKO BERKAH CELL", status Online, indikator saldo Rp 1.417.000, lazy chat list |
-| **Katalog & Pilihan Produk** | `pos_konter_pilihan_produk` | `ProductNominalGrid`: Denom 5K, 10K, 20K, 25K, 50K, 100K + Tab Kategori (Pulsa, Data, PLN, dll.) |
-| **Smart Contact Suggest** | `pos_konter_smart_suggest_nomor_089566` | Dropdown sugesti otomatis saat kasir mengetik nomor awalan `0895...` |
-| **Batch Transaction Card** | `pos_konter_batch_transaction_card` | Kartu ringkasan transaksi multi-item dengan status dot (draft/processing/sukses) |
-| **Peringatan Nomor Duplikat** | `pos_konter_duplicate_target_warning` | Warning Card aksen amber `#FFFBEB` saat nomor tujuan sama diinput dalam 15 menit |
-| **Mode Edit Transaksi** | `pos_konter_edit_input_chat` | Reordering item drag-and-drop & tombol hapus item transaksi |
-| **Konfirmasi PIN 4 Digit** | `pos_konter_konfirmasi_pin_4_digit` | Bottom Sheet modal dengan indikator bullet PIN dan keypad numerik kustom |
-| **Balasan Sukses Sistem** | `pos_konter_transaksi_sukses_balasan_sistem` | Kartu hijau balasan sukses berisi SN OtomaX, Ref ID, Saldo sisa, & shortcut nota |
-| **Preview Cetak Struk** | `pos_konter_cetak_struk_preview_nota_terpisah` | Tampilan kertas nota bergerigi (sawtooth edge) untuk printer thermal 58mm |
-| **Bagi Nota WhatsApp** | `pos_konter_kirim_whatsapp_nota_terpisah` | Modal kirim rincian nota terpisah langsung ke nomor WA pelanggan |
+**Batasan penting:** transaksi pada Fase 1 masih berjalan dengan data produk dan hasil OtomaX simulasi di memori. Tombol dan modal harus terasa nyata, tetapi belum mengirim transaksi ke server produksi.
 
 ---
 
-### 🧠 FASE 2: ViewModel & State Management
-- Implementasi `ChatPOSViewModel` dengan StateFlow reaktif.
-- Pengelolaan state transaksi: `DRAFT`, `PENDING_PIN`, `PROCESSING_OTOMAX`, `SUCCESS`, `DUPLICATE_WARNING`, `FAILED`.
-- Parser teks chat instan: mengekstrak format `[KODE].[TUJUAN]` (contoh: `S10.089512345678`).
+## 2. Struktur UI yang Sudah Terpasang
+
+### 2.1 Entry point dan shell aplikasi
+
+- `MainActivity.kt` memasang `ChatPOSTheme`, `Surface`, dan satu `ChatPOSViewModel`.
+- `AppShell.kt` menyediakan navigasi tab:
+  - **Chat** untuk daftar percakapan dan membuka transaksi baru.
+  - **Riwayat** untuk daftar transaksi yang sudah berhasil.
+- Halaman detail chat menyembunyikan bottom navigation agar area transaksi lebih fokus.
+
+### 2.2 Design system
+
+Token UI berada di `ui/theme/`:
+
+- `Color.kt` — warna primary biru, success hijau, warning amber, error, background, dan divider.
+- `Type.kt` — hierarki tipografi untuk heading, body, label, dan angka transaksi.
+- `Shape.kt` — radius kartu, bubble, tombol, dan pill.
+- `Dimensions.kt` — spacing, ukuran app bar, input, dan touch target.
+- `Theme.kt` — Material 3 light theme.
+- `ModifierExtensions.kt` dan `CurrencyFormatter.kt` — gaya komponen dan format Rupiah.
+
+Gaya visual utama yang harus dipertahankan:
+
+- Bubble kasir rata kanan berwarna biru.
+- Balasan sistem rata kiri dengan kartu putih.
+- Kartu transaksi memakai radius lembut, garis pemisah, status, dan angka monospaced/tabular.
+- Aksi utama menggunakan biru; warning menggunakan amber; error menggunakan merah.
+- Tombol interaktif mempertahankan area sentuh yang nyaman untuk penggunaan kasir.
 
 ---
 
-### 🔌 FASE 3: Integrasi Engine OtomaX
-- **Protokol Transaksi OtomaX IP Center**:
-  - Format request HTTP GET/POST: `http://[IP_OTOMAX]:[PORT]/api/trx?memberid=[ID]&pin=[PIN]&kodeproduk=[KODE]&tujuan=[NO_HP]&refid=[UUID]`
-  - Format Balasan OtomaX:
-    - *Sukses*: `Trx [KODE] ke [TUJUAN] SUKSES. SN: 1234567890. Sisa Saldo: Rp 1.406.000`
-    - *Pending*: `Trx [KODE] ke [TUJUAN] SEDANG DIPROSES. Ref: TRX987`
-    - *Gagal*: `Trx [KODE] ke [TUJUAN] GAGAL. Saldo tidak mencukupi / Nomor salah.`
-- Polling status otomatis untuk transaksi pending & idempotency protection via RefID unik.
+## 3. Fitur Fase 1 yang Sudah Berjalan
+
+### 3.1 Halaman chat dan state awal
+
+- App bar menampilkan `TOKO BERKAH CELL`.
+- Status koneksi dan saldo demo ditampilkan pada area transaksi.
+- Pesan awal terdiri dari divider **HARI INI** dan welcome card.
+- Welcome card otomatis disembunyikan setelah transaksi pertama dibuat.
+- Daftar chat menggunakan `LazyColumn` dan otomatis scroll ke pesan terbaru.
+- Waktu pesan ditampilkan dalam format jam-menit pada alur chat.
+
+### 3.2 Input perintah transaksi
+
+Implementasi saat ini mendukung:
+
+- Format produk umum: `[kode].[nomor]`, misalnya `10.089512345678`.
+- Input beberapa baris untuk membuat satu batch.
+- Tombol **Tambah Transaksi Lain** untuk menambah baris berikutnya.
+- Cursor otomatis dipindahkan ke posisi akhir setelah perubahan dari assistant.
+- Nomor tujuan yang diketik sebagai angka dapat diformat per kelompok digit.
+- Toggle kelompok digit tujuan 3 atau 4 digit.
+- Validasi dasar kode, nomor tujuan, rekening, nominal, dan PIN yang salah tempat.
+- Hint input berubah sesuai konteks Pulsa, PLN, E-Wallet, cek rekening, dan transfer bank.
+- Input transfer bank:
+  - `cek[bank].[norek]` atau format cek rekening terkait.
+  - `tbank.[bank5/10].[norek].[nominal]`.
+- PIN tidak boleh diketik di akhir perintah; PIN diminta melalui modal terpisah.
+
+### 3.3 Assistant produk dan kontak
+
+- Kategori produk tersedia melalui assistant input.
+- Kategori aktif mencakup Pulsa, Transfer, dan kategori yang berasal dari katalog produk demo.
+- Subkategori produk dapat ditampilkan berdasarkan kelompok masa berlaku.
+- Saran produk berubah berdasarkan awalan kode, nomor tujuan, operator, kategori, dan subkategori.
+- Smart contact suggestion mencari kontak tersimpan berdasarkan nama atau nomor.
+- Klik produk mengisi kode dan titik secara otomatis.
+- Klik kontak melengkapi nomor tujuan pada baris aktif.
+- Untuk nomor seluler yang sudah lengkap, produk Pulsa yang relevan dapat disarankan.
+- Ikon lampiran dan keypad tidak digunakan pada input bar saat ini.
+
+### 3.4 Draft transaksi dan batch
+
+Saat kasir menekan kirim:
+
+- Input tidak langsung diproses.
+- Sistem membuat `UserTransactionCardMessage` sebagai kartu draft di chat.
+- Kartu menampilkan `#cust001`, waktu, daftar item, produk, nomor tujuan, biaya admin bila ada, dan total.
+- Satu kiriman beberapa baris diringkas menjadi satu batch.
+- Tombol **Edit** mengembalikan perintah ke input agar dapat diperbaiki.
+- Tombol **Proses Sekarang** melanjutkan draft ke tahap warning/PIN.
+- Tombol salin tersedia pada kartu yang sudah diproses.
+
+Komponen terkait:
+
+- `ChatBubble.kt`
+- `BatchTransactionCard.kt`
+- `TransactionItem` dan `TransactionBatch`
+- `ChatMessage.UserTransactionCardMessage`
+
+### 3.5 Warning duplikat dan PIN
+
+- Nomor tujuan yang sama dalam rentang 15 menit ditandai sebagai transaksi berulang.
+- Kartu draft menampilkan informasi berapa menit sejak transaksi sebelumnya.
+- Kasir dapat memilih **Batalkan** atau **Tetap Proses**.
+- Konfirmasi PIN menggunakan bottom sheet dengan keypad 4 digit.
+- Draft ditandai sedang dikirim saat proses simulasi berlangsung.
+
+### 3.6 Balasan hasil transaksi
+
+- Semua item dalam satu pengiriman menghasilkan satu kartu balasan sistem.
+- Kartu hasil menampilkan status sukses, detail item, SN, Ref ID, nominal, biaya admin, dan sisa saldo demo.
+- Balasan sistem memakai label **BALASAN SERVER** dan rata kiri.
+- Aksi nota tersedia dari kartu hasil:
+  - Buka pratinjau cetak.
+  - Buka dialog berbagi WhatsApp.
+
+### 3.7 Nota, WhatsApp, dan riwayat
+
+- `ReceiptPrintPreviewModal.kt` menampilkan pratinjau nota thermal 58 mm.
+- `WhatsAppShareModal.kt` menyediakan pilihan nota gabungan atau nota terpisah per item.
+- Pengiriman WhatsApp memakai intent URL; keberhasilan tetap bergantung pada aplikasi WhatsApp di perangkat.
+- `ChatHistoryScreen.kt` menampilkan transaksi berdasarkan kontak/nomor dan detail nota.
+- `TransactionHistoryScreen.kt` menyediakan filter berdasarkan nomor, kontak, atau produk.
 
 ---
 
-### 🖨️ FASE 4: Integrasi Hardware POS & Bagikan Struk
-- Driver ESC/POS Thermal Printer Bluetooth (Bluetooth SPP RFCOMM).
-- Formatter teks struk kasir dengan opsi cetak nota terpisah per item transaksi.
-- Intent integrasi WhatsApp (`https://api.whatsapp.com/send?phone=...&text=...`).
+## 4. Batasan Implementasi Saat Ini
+
+Bagian berikut **belum merupakan integrasi produksi** dan harus tetap dianggap simulasi selama Fase 1:
+
+- Tidak ada request HTTP/API ke OtomaX.
+- Hasil sukses, SN, Ref ID, timestamp, dan pengurangan saldo dibuat lokal oleh `ChatPOSViewModel`.
+- Katalog produk, kontak, saldo, status online, dan transaksi hanya berada di memory.
+- Data hilang saat aplikasi dibuat ulang atau proses aplikasi dihentikan.
+- PIN belum disimpan atau dilindungi dengan Android Keystore.
+- Tombol cetak masih menampilkan notifikasi; belum berkomunikasi dengan printer Bluetooth.
+- Warning duplikat menggunakan map transaksi lokal, bukan histori permanen.
+- Belum ada state error/pending dari server nyata.
+
+Batasan ini tidak perlu diselesaikan untuk menutup Fase 1, tetapi harus diberi label jelas sebagai **demo/simulasi** pada dokumentasi dan pengujian UI.
 
 ---
 
-### 🛡️ FASE 5: Pengujian, Keamanan & Deployment
-- Proteksi PIN tersimpan di Android Keystore / EncryptedSharedPreferences.
-- Deteksi Root / Device Tampering untuk perlindungan saldo dompet agen.
-- Build APK Debug & Release (ProGuard / R8 enabled).
+## 5. Pekerjaan Tersisa untuk Menutup Fase 1
+
+Prioritas pekerjaan berikut berdasarkan dampaknya terhadap pengalaman UI, bukan integrasi backend:
+
+### Prioritas tinggi
+
+- Rapikan konsistensi tampilan draft, hasil sukses, warning, dan modal agar seluruhnya mengikuti token pada `ui/theme/`.
+- Pastikan seluruh aksi penting memiliki label dan content description yang jelas.
+- Uji alur utama pada kondisi:
+  - input satu transaksi;
+  - input batch beberapa baris;
+  - edit draft;
+  - nomor duplikat;
+  - PIN benar dan PIN tidak lengkap;
+  - hasil tanpa item kosong;
+  - keyboard terbuka dan layar kecil.
+- Pastikan state welcome card, draft, hasil, dan riwayat tidak menampilkan data yang saling bertentangan.
+- Beri feedback yang konsisten untuk loading, invalid input, batal, salin, dan kembali.
+
+### Prioritas menengah
+
+- Periksa ulang spacing, typography, warna status, dan ukuran tombol terhadap referensi di folder `stitch/`.
+- Tambahkan preview Compose untuk komponen utama dan state penting.
+- Pastikan filter riwayat menampilkan empty state yang informatif.
+- Pastikan dialog WhatsApp menangani daftar item tunggal dan batch tanpa teks terpotong.
+- Pastikan pratinjau nota tetap terbaca pada perangkat dengan ukuran layar berbeda.
+
+### Tidak dikerjakan pada Fase 1
+
+- Retrofit/HTTP client dan protokol OtomaX.
+- Room, DataStore, atau sinkronisasi data permanen.
+- Keystore, enkripsi PIN, root detection, dan hardening perangkat.
+- Driver printer ESC/POS Bluetooth.
+- Retry, polling pending, idempotency, dan rekonsiliasi transaksi.
+- Release hardening, ProGuard/R8, serta deployment produksi.
+
+---
+
+## 6. Definition of Done Fase 1
+
+Fase 1 dapat dianggap selesai apabila:
+
+- Aplikasi dapat dibuka dan menampilkan shell ChatPOS tanpa error.
+- Kasir dapat membuat draft satu transaksi maupun batch dari input chat.
+- Assistant produk/kontak memberikan saran yang relevan dan dapat mengisi input.
+- Draft tidak langsung memproses transaksi ketika tombol kirim ditekan.
+- Edit, batal, proses, warning duplikat, dan PIN memiliki perilaku yang konsisten.
+- Satu batch menghasilkan satu kartu balasan sistem.
+- Pratinjau nota dan pilihan berbagi WhatsApp dapat dibuka dari hasil transaksi.
+- Tab Chat dan Riwayat dapat digunakan tanpa kehilangan alur navigasi.
+- Tampilan utama konsisten dengan referensi Stitch dan nyaman digunakan pada perangkat Android target.
+- Semua data eksternal dan hasil transaksi simulasi diberi batas yang jelas sehingga tidak disalahartikan sebagai transaksi produksi.
+
+---
+
+## 7. Referensi Fase 1
+
+- `app/src/main/java/com/example/chatpos/`
+- `app/src/main/java/com/example/chatpos/ui/`
+- `app/src/main/java/com/example/chatpos/viewmodel/ChatPOSViewModel.kt`
+- `stitch/conversational_retail_pos/DESIGN.md`
+- Folder layar pada `stitch/pos_konter_*/`
+- Template dan referensi UI pada `implementasi plan/`
+
+Dokumen ini menggantikan roadmap multi-fase lama sebagai acuan kerja aktif. Fase berikutnya baru perlu ditambahkan setelah Definition of Done Fase 1 tercapai.

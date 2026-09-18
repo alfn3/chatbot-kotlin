@@ -5,12 +5,18 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chatpos.model.ChatMessage
+import com.example.chatpos.model.CashDenomination
+import com.example.chatpos.model.CashDrawerSummary
+import com.example.chatpos.model.DefaultDenominations
+import com.example.chatpos.model.ExpenseCategories
 import com.example.chatpos.model.OtomaxBatchResult
 import com.example.chatpos.model.OtomaxItemDetail
 import com.example.chatpos.model.OtomaxStatus
 import com.example.chatpos.model.ProductItem
 import com.example.chatpos.model.SampleProducts
+import com.example.chatpos.model.SampleStockData
 import com.example.chatpos.model.SavedContact
+import com.example.chatpos.model.StockItem
 import com.example.chatpos.model.TransactionItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,9 +80,82 @@ class ChatPOSViewModel : ViewModel() {
     val selectedProductSubcategory = _selectedProductSubcategory.asStateFlow()
     private val _destinationGroupSize = MutableStateFlow(4)
     val destinationGroupSize = _destinationGroupSize.asStateFlow()
-    val productCategories = (listOf("Pulsa", "Transfer") + SampleProducts.allProducts
+    val productCategories = (listOf("Pulsa", "Transfer", "Pengeluaran") + SampleProducts.allProducts
         .map { it.category }
         .distinct()).distinct()
+
+    val expenseCategories = ExpenseCategories.allCategories
+
+    private val _expenseAttachmentState = MutableStateFlow(ChatMessage.ExpenseAttachmentState.NONE)
+    val expenseAttachmentState = _expenseAttachmentState.asStateFlow()
+
+    private val _expenseAttachmentName = MutableStateFlow<String?>(null)
+    val expenseAttachmentName = _expenseAttachmentName.asStateFlow()
+
+    // --- FASE 1B: UANG LACI (CASH DRAWER) ---
+    private val _drawerInitialCash = MutableStateFlow(500_000L)
+    val drawerInitialCash = _drawerInitialCash.asStateFlow()
+
+    private val _cashDenominations = MutableStateFlow(DefaultDenominations.createDefaultList())
+    val cashDenominations = _cashDenominations.asStateFlow()
+
+    private val _isManualCashMode = MutableStateFlow(false)
+    val isManualCashMode = _isManualCashMode.asStateFlow()
+
+    private val _manualCashInput = MutableStateFlow("")
+    val manualCashInput = _manualCashInput.asStateFlow()
+
+    private val _isShiftClosed = MutableStateFlow(false)
+    val isShiftClosed = _isShiftClosed.asStateFlow()
+
+    private val _closedShiftSummary = MutableStateFlow<CashDrawerSummary?>(null)
+    val closedShiftSummary = _closedShiftSummary.asStateFlow()
+
+    // Total sales from successful transactions in chat
+    val drawerTotalSales = _messages.map { list ->
+        list.filterIsInstance<ChatMessage.SuccessBatchReceiptMessage>()
+            .sumOf { it.batchResult.totalAmount }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
+    // Total expenses from confirmed expense cards
+    val drawerTotalExpenses = _messages.map { list ->
+        list.filterIsInstance<ChatMessage.ExpenseCardMessage>()
+            .filter { it.isConfirmed }
+            .sumOf { it.amount }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
+    // Expected cash = initial + sales - expenses
+    val drawerExpectedCash = combine(_drawerInitialCash, drawerTotalSales, drawerTotalExpenses) { initial, sales, expenses ->
+        initial + sales - expenses
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, 500_000L)
+
+    // Actual counted cash = from denominations or manual input
+    val drawerActualCountedCash = combine(_isManualCashMode, _manualCashInput, _cashDenominations) { isManual, manualText, denoms ->
+        if (isManual) {
+            manualText.filter(Char::isDigit).toLongOrNull() ?: 0L
+        } else {
+            denoms.sumOf { it.total }
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+
+    // Difference = actual counted - expected
+    val drawerCashDifference = combine(drawerActualCountedCash, drawerExpectedCash) { actual, expected ->
+        actual - expected
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, -500_000L)
+
+    // --- FASE 1B: STOCK OPNAME ---
+    private val _stockItems = MutableStateFlow(SampleStockData.initialItems)
+    val stockItems = _stockItems.asStateFlow()
+
+    private val _stockSearchQuery = MutableStateFlow("")
+    val stockSearchQuery = _stockSearchQuery.asStateFlow()
+
+    private val _stockSelectedCategory = MutableStateFlow("Semua")
+    val stockSelectedCategory = _stockSelectedCategory.asStateFlow()
+
+    private val _isOpnameFinalized = MutableStateFlow(false)
+    val isOpnameFinalized = _isOpnameFinalized.asStateFlow()
+
     private fun productGroup(product: ProductItem): String {
         val validity = product.validity.lowercase()
         return when {
@@ -106,6 +185,12 @@ class ChatPOSViewModel : ViewModel() {
         return line.startsWith("cek.", ignoreCase = true) ||
             line.matches(Regex("""^cek[^.]+\..*""", RegexOption.IGNORE_CASE)) ||
             line.startsWith("tbank.", ignoreCase = true)
+    }
+
+    private fun isExpenseCommand(line: String): Boolean {
+        return line.startsWith("keluar.", ignoreCase = true) ||
+            line.startsWith("exp.", ignoreCase = true) ||
+            line.startsWith("pengeluaran.", ignoreCase = true)
     }
 
     val hasDotOnCurrentLine = _inputTextFieldValue.map { tfv ->
@@ -196,6 +281,12 @@ class ChatPOSViewModel : ViewModel() {
 
     private fun isTransactionLineValid(line: String): Boolean {
         if (hasTrailingPin(line)) return false
+        if (isExpenseCommand(line)) {
+            val parts = line.split(".")
+            return parts.size >= 3 && parts.any { part ->
+                part.filter(Char::isDigit).toLongOrNull()?.let { it > 0 } == true
+            }
+        }
         if (isTransferCommand(line)) {
             return if (line.startsWith("tbank.", ignoreCase = true)) {
                 val parts = line.split(".")
@@ -218,6 +309,9 @@ class ChatPOSViewModel : ViewModel() {
         val line = getCurrentLine(tfv.text).trim()
         if (hasTrailingPin(line)) {
             false
+        } else if (isExpenseCommand(line)) {
+            val parts = line.split(".")
+            parts.size >= 4 || (parts.size >= 3 && parts[1].toLongOrNull() != null)
         } else if (isTransferCommand(line) && line.startsWith("tbank.", ignoreCase = true)) {
             val parts = line.split(".")
             val bankCode = parts.getOrNull(1).orEmpty()
@@ -243,7 +337,9 @@ class ChatPOSViewModel : ViewModel() {
 
     val inputHintText = combine(_inputTextFieldValue, _selectedProductCategory) { tfv, category ->
         val line = getCurrentLine(tfv.text)
-        if (line.startsWith("cek", ignoreCase = true)) {
+        if (isExpenseCommand(line) || category == "Pengeluaran") {
+            "Format: keluar.[kategori].[nominal].[keterangan] (cth: keluar.listrik.50000.bayar pln)"
+        } else if (line.startsWith("cek", ignoreCase = true)) {
             "Format cek: cek[bank].[norek] (cth: cekbri.123456789)"
         } else if (line.startsWith("tbank.", ignoreCase = true)) {
             "Format transfer: tbank.[bank][5/10].[norek].[nominal]"
@@ -306,11 +402,64 @@ class ChatPOSViewModel : ViewModel() {
         } else {
             currentLine
         }
+
         val prefix = newValue.text.substringBeforeLast("\n", missingDelimiterValue = "")
         val text = if (newValue.text.contains("\n")) "$prefix\n$formattedLine" else formattedLine
         _inputTextFieldValue.value = newValue.copy(
             text = text,
             selection = TextRange(text.length)
+        )
+    }
+
+    fun simulateIncomingCustomerMessage(customerNumber: String, text: String) {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty()) return
+        val timestamp = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault()).format(Date())
+        val incoming = ChatMessage.CustomerIncomingMessage(
+            customerNumber = customerNumber,
+            text = trimmed,
+            timeString = timestamp
+        )
+        val request = parseIncomingTransaction(customerNumber, trimmed, timestamp)
+        _messages.value = _messages.value + incoming + listOfNotNull(request)
+    }
+
+    fun prepareIncomingTransaction(request: ChatMessage.IncomingTransactionRequest) {
+        _inputTextFieldValue.value = TextFieldValue(
+            text = request.command,
+            selection = TextRange(request.command.length)
+        )
+    }
+
+    private fun parseIncomingTransaction(
+        customerNumber: String,
+        text: String,
+        timestamp: String
+    ): ChatMessage.IncomingTransactionRequest? {
+        val match = Regex(
+            pattern = """(?i)\b(dana|pulsa|pln)\s*(\d+)\s*k?\s*(?:no|ke|untuk)?\s*(0\d{9,12})\b"""
+        ).find(text) ?: return null
+        val service = match.groupValues[1].lowercase()
+        val amount = match.groupValues[2].toLongOrNull() ?: return null
+        val destination = match.groupValues[3]
+        val nominal = amount * 1_000L
+        val code = when (service) {
+            "dana" -> "DANA$amount"
+            "pln" -> "PLN$amount"
+            else -> amount.toString()
+        }
+        val product = SampleProducts.findProduct(code) ?: SampleProducts.allProducts.firstOrNull {
+            it.denomination == nominal && (
+                (service == "dana" && it.category == "E-Wallet") ||
+                    (service == "pln" && it.category == "PLN") ||
+                    (service == "pulsa" && it.category == "Pulsa")
+                )
+        } ?: return null
+        return ChatMessage.IncomingTransactionRequest(
+            customerNumber = customerNumber,
+            command = "${product.code}.$destination",
+            productLabel = product.name,
+            timeString = timestamp
         )
     }
 
@@ -423,8 +572,56 @@ class ChatPOSViewModel : ViewModel() {
         if (trimmed.split("\n").any { hasTrailingPin(it.trim()) }) return
 
         val lines = trimmed.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
-        val items = mutableListOf<TransactionItem>()
         val currentTime = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault()).format(Date())
+
+        // Check if input is an expense command
+        val expenseLines = lines.filter { isExpenseCommand(it) }
+        if (expenseLines.isNotEmpty()) {
+            for (line in expenseLines) {
+                val parts = line.split(".")
+                val (category, amount, note) = when {
+                    parts.size >= 4 -> {
+                        val cat = parts[1].trim()
+                        val amt = parts[2].filter(Char::isDigit).toLongOrNull() ?: 0L
+                        val nt = parts.drop(3).joinToString(".").trim()
+                        Triple(cat, amt, nt)
+                    }
+                    parts.size == 3 -> {
+                        val numericFirst = parts[1].filter(Char::isDigit).toLongOrNull()
+                        if (numericFirst != null) {
+                            Triple("Biaya Operasional", numericFirst, parts[2].trim())
+                        } else {
+                            val amt = parts[2].filter(Char::isDigit).toLongOrNull() ?: 0L
+                            Triple(parts[1].trim(), amt, "Pengeluaran ${parts[1].trim()}")
+                        }
+                    }
+                    else -> Triple("Lainnya", 0L, "Pengeluaran konter")
+                }
+
+                if (amount > 0) {
+                    val expenseCard = ChatMessage.ExpenseCardMessage(
+                        rawCommand = line,
+                        category = category.ifBlank { "Biaya Operasional" },
+                        amount = amount,
+                        note = note.ifBlank { "Pengeluaran operasional konter" },
+                        attachmentState = _expenseAttachmentState.value,
+                        attachmentName = _expenseAttachmentName.value,
+                        isConfirmed = false,
+                        timeString = currentTime
+                    )
+                    val currentList = _messages.value.filterNot { it is ChatMessage.WelcomeCard }
+                    _messages.value = currentList + expenseCard
+                    _expenseAttachmentState.value = ChatMessage.ExpenseAttachmentState.NONE
+                    _expenseAttachmentName.value = null
+                }
+            }
+            _inputTextFieldValue.value = TextFieldValue("")
+            _selectedProductCategory.value = ""
+            _selectedProductSubcategory.value = ""
+            return
+        }
+
+        val items = mutableListOf<TransactionItem>()
 
         for (line in lines) {
             val parts = line.split(".")
@@ -617,7 +814,48 @@ class ChatPOSViewModel : ViewModel() {
         viewModelScope.launch {
             delay(1200)
 
-            var newBalance = _balance.value
+            val currentBalance = _balance.value
+            val failureReason = when {
+                pin != "1234" -> "PIN kasir salah. Periksa kembali PIN simulasi Anda."
+                userCard.totalAmount > currentBalance ->
+                    "Saldo demo tidak cukup untuk memproses batch ini."
+                else -> null
+            }
+
+            if (failureReason != null) {
+                _messages.value = _messages.value.map { msg ->
+                    if (msg.id == userCard.id && msg is ChatMessage.UserTransactionCardMessage) {
+                        msg.copy(isSending = false, hasProcessingError = true)
+                    } else {
+                        msg
+                    }
+                } + ChatMessage.ErrorBatchReceiptMessage(
+                    batchResult = OtomaxBatchResult(
+                        customerId = userCard.customerTag,
+                        items = userCard.items.map {
+                            OtomaxItemDetail(
+                                productCode = it.productCode,
+                                productName = it.productName,
+                                destination = it.destinationNumber,
+                                price = it.price,
+                                nominal = it.nominal,
+                                adminFee = it.adminFee,
+                                status = OtomaxStatus.FAILED
+                            )
+                        },
+                        totalAmount = userCard.totalAmount,
+                        sisaSaldo = currentBalance,
+                        status = OtomaxStatus.FAILED
+                    ),
+                    errorMessage = failureReason,
+                    customerTag = userCard.customerTag,
+                    timeString = userCard.timeString
+                )
+                _pendingUserCard.value = null
+                return@launch
+            }
+
+            var newBalance = currentBalance
             val resultItems = mutableListOf<OtomaxItemDetail>()
 
             userCard.items.forEach { item ->
@@ -680,5 +918,158 @@ class ChatPOSViewModel : ViewModel() {
 
     fun dismissWhatsAppModal() {
         _selectedWhatsAppTrx.value = null
+    }
+
+    // --- FASE 1B: EXPENSE ACTIONS ---
+    fun onExpenseCategorySelected(category: String) {
+        val cmd = "keluar.$category."
+        _inputTextFieldValue.value = TextFieldValue(cmd, TextRange(cmd.length))
+    }
+
+    fun simulateExpenseAttachmentUpload() {
+        viewModelScope.launch {
+            _expenseAttachmentState.value = ChatMessage.ExpenseAttachmentState.UPLOADING
+            delay(900)
+            val randomNum = (100..999).random()
+            _expenseAttachmentName.value = "nota_pengeluaran_$randomNum.jpg"
+            _expenseAttachmentState.value = ChatMessage.ExpenseAttachmentState.SUCCESS
+        }
+    }
+
+    fun clearExpenseAttachment() {
+        _expenseAttachmentState.value = ChatMessage.ExpenseAttachmentState.NONE
+        _expenseAttachmentName.value = null
+    }
+
+    fun retryExpenseAttachmentUpload(expense: ChatMessage.ExpenseCardMessage) {
+        viewModelScope.launch {
+            _messages.value = _messages.value.map {
+                if (it.id == expense.id && it is ChatMessage.ExpenseCardMessage) {
+                    it.copy(attachmentState = ChatMessage.ExpenseAttachmentState.UPLOADING)
+                } else it
+            }
+            delay(800)
+            _messages.value = _messages.value.map {
+                if (it.id == expense.id && it is ChatMessage.ExpenseCardMessage) {
+                    val randomNum = (100..999).random()
+                    it.copy(
+                        attachmentState = ChatMessage.ExpenseAttachmentState.SUCCESS,
+                        attachmentName = "nota_retry_$randomNum.jpg"
+                    )
+                } else it
+            }
+        }
+    }
+
+    fun confirmExpense(expense: ChatMessage.ExpenseCardMessage) {
+        _messages.value = _messages.value.map {
+            if (it.id == expense.id && it is ChatMessage.ExpenseCardMessage) {
+                it.copy(isConfirmed = true)
+            } else it
+        }
+    }
+
+    fun editExpense(expense: ChatMessage.ExpenseCardMessage) {
+        _messages.value = _messages.value.filterNot { it.id == expense.id }
+        _inputTextFieldValue.value = TextFieldValue(
+            text = expense.rawCommand,
+            selection = TextRange(expense.rawCommand.length)
+        )
+    }
+
+    fun cancelExpense(expense: ChatMessage.ExpenseCardMessage) {
+        _messages.value = _messages.value.map {
+            if (it.id == expense.id && it is ChatMessage.ExpenseCardMessage) {
+                it.copy(isCancelled = true)
+            } else it
+        }
+    }
+
+    // --- FASE 1B: CASH DRAWER ACTIONS ---
+    fun updateDenominationCount(value: Long, isCoin: Boolean, newCount: Int) {
+        if (newCount < 0) return
+        _cashDenominations.value = _cashDenominations.value.map {
+            if (it.value == value && it.isCoin == isCoin) it.copy(count = newCount) else it
+        }
+    }
+
+    fun setManualCashMode(enabled: Boolean) {
+        _isManualCashMode.value = enabled
+        if (enabled && _manualCashInput.value.isEmpty()) {
+            val current = _cashDenominations.value.sumOf { it.total }
+            if (current > 0) {
+                _manualCashInput.value = current.toString()
+            }
+        }
+    }
+
+    fun onManualCashInputChange(input: String) {
+        _manualCashInput.value = input.filter(Char::isDigit)
+    }
+
+    fun closeShift() {
+        val now = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+        val summary = CashDrawerSummary(
+            initialCash = _drawerInitialCash.value,
+            totalCashSales = drawerTotalSales.value,
+            totalExpenses = drawerTotalExpenses.value,
+            actualCashCounted = drawerActualCountedCash.value,
+            isShiftClosed = true,
+            shiftOpenedAt = "08:00 WIB",
+            shiftClosedAt = now,
+            cashierName = "Kasir Utama (Shift 1)"
+        )
+        _closedShiftSummary.value = summary
+        _isShiftClosed.value = true
+    }
+
+    fun resetShift() {
+        _isShiftClosed.value = false
+        _closedShiftSummary.value = null
+        _cashDenominations.value = DefaultDenominations.createDefaultList()
+        _manualCashInput.value = ""
+    }
+
+    // --- FASE 1B: STOCK OPNAME ACTIONS ---
+    fun onStockSearchQueryChange(query: String) {
+        _stockSearchQuery.value = query
+    }
+
+    fun onStockCategorySelected(category: String) {
+        _stockSelectedCategory.value = category
+    }
+
+    fun updatePhysicalStock(itemId: String, newStock: Int) {
+        if (newStock < 0) return
+        val now = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        _stockItems.value = _stockItems.value.map {
+            if (it.id == itemId) it.copy(physicalStock = newStock, lastAuditedTime = now) else it
+        }
+    }
+
+    fun scanBarcode(barcode: String): String {
+        val cleanBarcode = barcode.trim()
+        val existingItem = _stockItems.value.firstOrNull { it.barcode == cleanBarcode }
+        return if (existingItem != null) {
+            val updatedStock = existingItem.physicalStock + 1
+            val now = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            _stockItems.value = _stockItems.value.map {
+                if (it.id == existingItem.id) it.copy(physicalStock = updatedStock, lastAuditedTime = now) else it
+            }
+            "Barcode ${existingItem.barcode} (${existingItem.itemName}) terdeteksi: Fisik menjadi $updatedStock"
+        } else {
+            "Barcode $cleanBarcode tidak dikenal di katalog konter!"
+        }
+    }
+
+    fun finalizeStockOpname() {
+        _isOpnameFinalized.value = true
+    }
+
+    fun resetStockOpname() {
+        _isOpnameFinalized.value = false
+        _stockItems.value = SampleStockData.initialItems
+        _stockSearchQuery.value = ""
+        _stockSelectedCategory.value = "Semua"
     }
 }

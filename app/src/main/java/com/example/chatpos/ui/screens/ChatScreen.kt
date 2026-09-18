@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -31,12 +33,14 @@ import com.example.chatpos.model.ChatMessage
 import com.example.chatpos.ui.components.BalanceStripCard
 import com.example.chatpos.ui.components.ChatPOSAppBar
 import com.example.chatpos.ui.components.DuplicateTargetWarningCard
+import com.example.chatpos.ui.components.ExpenseCard
 import com.example.chatpos.ui.components.InputCommandBar
 import com.example.chatpos.ui.components.PinConfirmationBottomSheet
 import com.example.chatpos.ui.components.ReceiptPrintPreviewModal
 import com.example.chatpos.ui.components.SystemMessageCard
 import com.example.chatpos.ui.components.TransactionInputAssistant
 import com.example.chatpos.ui.components.TransactionSuccessCard
+import com.example.chatpos.ui.components.TransactionErrorCard
 import com.example.chatpos.ui.components.UserMessageBubble
 import com.example.chatpos.ui.components.UserTransactionCard
 import com.example.chatpos.ui.components.WelcomeSystemCard
@@ -75,6 +79,9 @@ fun ChatScreen(
     val isCurrentLineComplete by viewModel.isCurrentLineComplete.collectAsState()
     val inputHintText by viewModel.inputHintText.collectAsState()
 
+    val expenseAttachmentState by viewModel.expenseAttachmentState.collectAsState()
+    val expenseAttachmentName by viewModel.expenseAttachmentName.collectAsState()
+
     val showPinModal by viewModel.showPinModal.collectAsState()
     val selectedReceipt by viewModel.selectedBatchReceipt.collectAsState()
     val selectedWhatsAppTrx by viewModel.selectedWhatsAppTrx.collectAsState()
@@ -95,9 +102,6 @@ fun ChatScreen(
                     isOnline = isOnline,
                     showOnline = false,
                     onBackClick = onBack,
-                    onSearchClick = {
-                        Toast.makeText(context, "Pencarian Histori Transaksi", Toast.LENGTH_SHORT).show()
-                    },
                     onMenuClick = {
                         Toast.makeText(context, "Menu Pengaturan OtomaX", Toast.LENGTH_SHORT).show()
                     }
@@ -141,6 +145,12 @@ fun ChatScreen(
                     onAddAnotherTransaction = {
                         viewModel.addAnotherTransactionLine()
                     },
+                    expenseCategories = viewModel.expenseCategories,
+                    expenseAttachmentState = expenseAttachmentState,
+                    expenseAttachmentName = expenseAttachmentName,
+                    onExpenseCategoryClick = { viewModel.onExpenseCategorySelected(it) },
+                    onSimulateAttachmentUpload = { viewModel.simulateExpenseAttachmentUpload() },
+                    onClearAttachment = { viewModel.clearExpenseAttachment() },
                     isProductPickerVisible = isProductPickerVisible,
                     onToggleProductPicker = { isProductPickerVisible = !isProductPickerVisible }
                 )
@@ -175,6 +185,9 @@ fun ChatScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .clickable {
+                        isProductPickerVisible = false
+                    }
             ) {
                 items(messages, key = { message -> message.id }) { message ->
                     when (message) {
@@ -182,16 +195,19 @@ fun ChatScreen(
                             WhatsAppDateDivider(label = message.label)
                         }
                         is ChatMessage.WelcomeCard -> {
-                            WelcomeSystemCard(
-                                storeName = message.storeName,
-                                message = message.message
-                            )
+                            AnimatedVisibility(visible = messages.any { it is ChatMessage.WelcomeCard }) {
+                                WelcomeSystemCard(
+                                    storeName = message.storeName,
+                                    message = message.message
+                                )
+                            }
                         }
                         is ChatMessage.UserTransactionCardMessage -> {
                             UserTransactionCard(
                                 message = message,
                                 onProcessClicked = { viewModel.onProcessUserCard(it) },
                                 onEditClicked = { viewModel.onEditUserCard(it) },
+                                onRetryClicked = { viewModel.onProcessUserCard(it) },
                                 onCopyTransaction = {
                                     val clipboard = context.getSystemService(ClipboardManager::class.java)
                                     clipboard?.setPrimaryClip(
@@ -230,6 +246,22 @@ fun ChatScreen(
                                 onPrintReceipt = { viewModel.openReceiptModal(message.batchResult) },
                                 onShareWhatsApp = { viewModel.openWhatsAppModal(message.batchResult) }
                             )
+                        }
+                        is ChatMessage.ErrorBatchReceiptMessage -> {
+                            TransactionErrorCard(message = message)
+                        }
+                        is ChatMessage.ExpenseCardMessage -> {
+                            ExpenseCard(
+                                message = message,
+                                onConfirm = { viewModel.confirmExpense(it) },
+                                onEdit = { viewModel.editExpense(it) },
+                                onCancel = { viewModel.cancelExpense(it) },
+                                onRetryUpload = { viewModel.retryExpenseAttachmentUpload(it) }
+                            )
+                        }
+                        is ChatMessage.CustomerIncomingMessage,
+                        is ChatMessage.IncomingTransactionRequest -> {
+                            // Customer-specific messages are rendered in the customer chat detail screen.
                         }
                     }
                 }

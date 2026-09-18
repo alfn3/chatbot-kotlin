@@ -4,9 +4,10 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PointOfSale
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -35,30 +36,52 @@ fun AppShell(viewModel: ChatPOSViewModel) {
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             if (!isChatDetailOpen && !isChatPOSOpen) {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0; isChatDetailOpen = false; isChatPOSOpen = false },
-                    icon = { Icon(Icons.Default.Chat, contentDescription = null) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF2563EB),
-                        selectedTextColor = Color(0xFF2563EB),
-                        indicatorColor = Color(0xFFDCEBFF)
-                    ),
-                    label = { Text("Chat") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1; isChatDetailOpen = false; isChatPOSOpen = false },
-                    icon = { Icon(Icons.Default.History, contentDescription = null) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF2563EB),
-                        selectedTextColor = Color(0xFF2563EB),
-                        indicatorColor = Color(0xFFDCEBFF)
-                    ),
-                    label = { Text("Riwayat") }
-                )
-            }
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0; isChatDetailOpen = false; isChatPOSOpen = false },
+                        icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Tab Chat") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color(0xFF2563EB),
+                            selectedTextColor = Color(0xFF2563EB),
+                            indicatorColor = Color(0xFFDCEBFF)
+                        ),
+                        label = { Text("Chat") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1; isChatDetailOpen = false; isChatPOSOpen = false },
+                        icon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Tab Riwayat") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color(0xFF2563EB),
+                            selectedTextColor = Color(0xFF2563EB),
+                            indicatorColor = Color(0xFFDCEBFF)
+                        ),
+                        label = { Text("Riwayat") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2; isChatDetailOpen = false; isChatPOSOpen = false },
+                        icon = { Icon(Icons.Default.PointOfSale, contentDescription = "Tab Uang Laci") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color(0xFF2563EB),
+                            selectedTextColor = Color(0xFF2563EB),
+                            indicatorColor = Color(0xFFDCEBFF)
+                        ),
+                        label = { Text("Uang Laci") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3; isChatDetailOpen = false; isChatPOSOpen = false },
+                        icon = { Icon(Icons.Default.Inventory2, contentDescription = "Tab Stok") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color(0xFF2563EB),
+                            selectedTextColor = Color(0xFF2563EB),
+                            indicatorColor = Color(0xFFDCEBFF)
+                        ),
+                        label = { Text("Stok") }
+                    )
+                }
             }
         }
     ) { padding ->
@@ -79,9 +102,16 @@ fun AppShell(viewModel: ChatPOSViewModel) {
                         Toast.makeText(context, "Nota siap dibagikan ke WhatsApp", Toast.LENGTH_SHORT).show()
                     }
                 )
-                else -> TransactionHistoryScreen(
+                1 -> TransactionHistoryScreen(
                     viewModel = viewModel,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues()
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(),
+                    onGoToChat = { selectedTab = 0; isChatDetailOpen = false; isChatPOSOpen = true }
+                )
+                2 -> CashDrawerScreen(
+                    viewModel = viewModel
+                )
+                3 -> StockOpnameScreen(
+                    viewModel = viewModel
                 )
             }
         }

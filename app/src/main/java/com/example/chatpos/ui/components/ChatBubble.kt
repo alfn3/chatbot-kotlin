@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -153,6 +154,7 @@ fun UserTransactionCard(
     message: ChatMessage.UserTransactionCardMessage,
     onProcessClicked: (ChatMessage.UserTransactionCardMessage) -> Unit = {},
     onEditClicked: (ChatMessage.UserTransactionCardMessage) -> Unit = {},
+    onRetryClicked: (ChatMessage.UserTransactionCardMessage) -> Unit = {},
     onCopyTransaction: (ChatMessage.UserTransactionCardMessage) -> Unit = {},
     onDuplicateCancel: (ChatMessage.UserTransactionCardMessage) -> Unit = {},
     onDuplicateProceed: (ChatMessage.UserTransactionCardMessage) -> Unit = {},
@@ -188,6 +190,7 @@ fun UserTransactionCard(
             }
             Box(
                 modifier = Modifier
+                    .animateContentSize()
                     .fillMaxWidth()
                     .clip(
                         RoundedCornerShape(
@@ -327,22 +330,56 @@ fun UserTransactionCard(
             }
 
             if (message.isProcessed && !message.isSending && showActions) {
-                OutlinedButton(
-                    onClick = { onCopyTransaction(message) },
-                    modifier = Modifier.padding(top = 6.dp),
-                    shape = RoundedCornerShape(999.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryLight)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Copy Trx",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
-                    )
+                if (message.hasProcessingError) {
+                    Row(
+                        modifier = Modifier.padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { onEditClicked(message) },
+                            modifier = Modifier.height(34.dp),
+                            shape = RoundedCornerShape(999.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryLight)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit transaksi",
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Edit", fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = { onRetryClicked(message) },
+                            modifier = Modifier.height(34.dp),
+                            shape = RoundedCornerShape(999.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryLight)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FlashOn,
+                                contentDescription = "Ulangi transaksi",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Ulang Trx", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { onCopyTransaction(message) },
+                        modifier = Modifier.padding(top = 6.dp),
+                        shape = RoundedCornerShape(999.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryLight)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Salin transaksi",
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Copy Trx", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
 
