@@ -19,6 +19,14 @@ sealed class ChatMessage(
         override val timeString: String = "09:41"
     ) : ChatMessage(id, timeString)
 
+    data class ExpenseContactCard(
+        override val id: String = UUID.randomUUID().toString(),
+        val label: String = "Pengeluaran",
+        val subtitle: String = "Catat pengeluaran operasional konter",
+        val totalExpense: Long = 0,
+        override val timeString: String = "09:41"
+    ) : ChatMessage(id, timeString)
+
     data class UserTransactionCardMessage(
         override val id: String = UUID.randomUUID().toString(),
         val rawCommand: String,

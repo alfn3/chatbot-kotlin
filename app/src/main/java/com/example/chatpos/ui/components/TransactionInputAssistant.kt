@@ -50,8 +50,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chatpos.model.ChatMessage
-import com.example.chatpos.model.ExpenseCategories
 import com.example.chatpos.model.ProductItem
 import com.example.chatpos.model.SavedContact
 import com.example.chatpos.ui.theme.DividerColor
@@ -89,14 +87,7 @@ fun TransactionInputAssistant(
     onProductSubcategorySelected: (String) -> Unit,
     onContactClick: (SavedContact) -> Unit,
     onAddAnotherTransaction: () -> Unit,
-    expenseCategories: List<String> = ExpenseCategories.allCategories,
-    expenseAttachmentState: ChatMessage.ExpenseAttachmentState = ChatMessage.ExpenseAttachmentState.NONE,
-    expenseAttachmentName: String? = null,
-    onExpenseCategoryClick: (String) -> Unit = {},
-    onSimulateAttachmentUpload: () -> Unit = {},
-    onClearAttachment: () -> Unit = {},
     isProductPickerVisible: Boolean = true,
-    onToggleProductPicker: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -338,174 +329,6 @@ fun TransactionInputAssistant(
                                     color = if (category == selectedProductCategory) PrimaryLight
                                     else Color(0xFF475569)
                                 )
-                            }
-                        }
-                    }
-                }
-
-                // CASE: PENGELUARAN CATEGORY SELECTED
-                if (isProductPickerVisible && selectedProductCategory.equals("Pengeluaran", ignoreCase = true)) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp, bottom = 8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "PILIH KATEGORI PENGELUARAN",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    letterSpacing = 0.3.sp
-                                ),
-                                color = Color(0xFF334155)
-                            )
-                        }
-
-                        // Expense category chips
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            items(expenseCategories) { cat ->
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .clickable { onExpenseCategoryClick(cat) }
-                                        .background(Color(0xFFEFF6FF))
-                                        .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text(
-                                        text = cat,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 11.sp
-                                        ),
-                                        color = PrimaryLight
-                                    )
-                                }
-                            }
-                        }
-
-                        // Attachment simulation button
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            when (expenseAttachmentState) {
-                                ChatMessage.ExpenseAttachmentState.NONE -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .clickable { onSimulateAttachmentUpload() }
-                                            .background(Color(0xFFF1F5F9))
-                                            .border(1.dp, DividerColor, RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                Icons.Default.AttachFile,
-                                                contentDescription = null,
-                                                tint = Color(0xFF475569),
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "📎 Lampirkan Foto Nota (Simulasi)",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.Medium,
-                                                    fontSize = 11.sp
-                                                ),
-                                                color = Color(0xFF334155)
-                                            )
-                                        }
-                                    }
-                                }
-                                ChatMessage.ExpenseAttachmentState.UPLOADING -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0xFFEFF6FF))
-                                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(12.dp),
-                                                strokeWidth = 2.dp,
-                                                color = PrimaryLight
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "Mengunggah foto nota...",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                                color = PrimaryLight
-                                            )
-                                        }
-                                    }
-                                }
-                                ChatMessage.ExpenseAttachmentState.SUCCESS -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0xFFECFDF5))
-                                            .border(1.dp, Color(0xFF86EFAC), RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                Icons.Default.CheckCircle,
-                                                contentDescription = null,
-                                                tint = SuccessGreen,
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = expenseAttachmentName ?: "Nota terlampir",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 11.sp
-                                                ),
-                                                color = Color(0xFF15803D)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = "Hapus",
-                                                tint = Color(0xFF64748B),
-                                                modifier = Modifier
-                                                    .size(14.dp)
-                                                    .clickable { onClearAttachment() }
-                                            )
-                                        }
-                                    }
-                                }
-                                ChatMessage.ExpenseAttachmentState.FAILED -> {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .clickable { onSimulateAttachmentUpload() }
-                                            .background(Color(0xFFFEE2E2))
-                                            .border(1.dp, Color(0xFFFCA5A5), RoundedCornerShape(8.dp))
-                                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = "Gagal unggah. Coba lagi",
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                                                color = Color(0xFFB91C1C)
-                                            )
-                                        }
-                                    }
-                                }
                             }
                         }
                     }

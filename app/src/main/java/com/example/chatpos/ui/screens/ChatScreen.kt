@@ -34,6 +34,7 @@ import com.example.chatpos.ui.components.BalanceStripCard
 import com.example.chatpos.ui.components.ChatPOSAppBar
 import com.example.chatpos.ui.components.DuplicateTargetWarningCard
 import com.example.chatpos.ui.components.ExpenseCard
+import com.example.chatpos.ui.components.ExpenseContactCard
 import com.example.chatpos.ui.components.InputCommandBar
 import com.example.chatpos.ui.components.PinConfirmationBottomSheet
 import com.example.chatpos.ui.components.ReceiptPrintPreviewModal
@@ -46,12 +47,14 @@ import com.example.chatpos.ui.components.UserTransactionCard
 import com.example.chatpos.ui.components.WelcomeSystemCard
 import com.example.chatpos.ui.components.WhatsAppDateDivider
 import com.example.chatpos.ui.components.WhatsAppShareModal
+import com.example.chatpos.ui.screens.ExpenseChatScreen
 import com.example.chatpos.ui.theme.BackgroundCanvas
 import com.example.chatpos.viewmodel.ChatPOSViewModel
 
 @Composable
 fun ChatScreen(
     viewModel: ChatPOSViewModel,
+    onOpenExpenseChat: () -> Unit = {},
     onOpenReceiptHistory: () -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
@@ -60,6 +63,7 @@ fun ChatScreen(
     var isProductPickerVisible by remember { mutableStateOf(true) }
 
     val counterName by viewModel.counterName.collectAsState()
+    var isExpenseOpen by remember { mutableStateOf(false) }
     val isOnline by viewModel.isOnline.collectAsState()
     val balance by viewModel.balance.collectAsState()
     val messages by viewModel.messages.collectAsState()
@@ -78,9 +82,6 @@ fun ChatScreen(
     val isInputValid by viewModel.isInputValid.collectAsState()
     val isCurrentLineComplete by viewModel.isCurrentLineComplete.collectAsState()
     val inputHintText by viewModel.inputHintText.collectAsState()
-
-    val expenseAttachmentState by viewModel.expenseAttachmentState.collectAsState()
-    val expenseAttachmentName by viewModel.expenseAttachmentName.collectAsState()
 
     val showPinModal by viewModel.showPinModal.collectAsState()
     val selectedReceipt by viewModel.selectedBatchReceipt.collectAsState()
@@ -145,14 +146,7 @@ fun ChatScreen(
                     onAddAnotherTransaction = {
                         viewModel.addAnotherTransactionLine()
                     },
-                    expenseCategories = viewModel.expenseCategories,
-                    expenseAttachmentState = expenseAttachmentState,
-                    expenseAttachmentName = expenseAttachmentName,
-                    onExpenseCategoryClick = { viewModel.onExpenseCategorySelected(it) },
-                    onSimulateAttachmentUpload = { viewModel.simulateExpenseAttachmentUpload() },
-                    onClearAttachment = { viewModel.clearExpenseAttachment() },
                     isProductPickerVisible = isProductPickerVisible,
-                    onToggleProductPicker = { isProductPickerVisible = !isProductPickerVisible }
                 )
 
                 // Bottom Input Command Bar
@@ -179,6 +173,20 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Fixed Contact Cards at top (below app bar)
+            AnimatedVisibility(visible = messages.any { it is ChatMessage.WelcomeCard }) {
+                WelcomeSystemCard(
+                    storeName = "TOKO BERKAH CELL",
+                    message = "Selamat datang di ChatPOS! Silakan pilih produk di atas atau ketik perintah transaksi (contoh: 5.089512345678)."
+                )
+            }
+            ExpenseContactCard(
+                message = ChatMessage.ExpenseContactCard(
+                    totalExpense = viewModel.drawerTotalExpenses.value
+                ),
+                onClick = { onOpenExpenseChat() }
+            )
+
             // Main Chat Stream
             LazyColumn(
                 state = listState,
@@ -189,18 +197,10 @@ fun ChatScreen(
                         isProductPickerVisible = false
                     }
             ) {
-                items(messages, key = { message -> message.id }) { message ->
+                items(messages.filter { it !is ChatMessage.WelcomeCard && it !is ChatMessage.ExpenseContactCard }, key = { message -> message.id }) { message ->
                     when (message) {
                         is ChatMessage.DateDivider -> {
                             WhatsAppDateDivider(label = message.label)
-                        }
-                        is ChatMessage.WelcomeCard -> {
-                            AnimatedVisibility(visible = messages.any { it is ChatMessage.WelcomeCard }) {
-                                WelcomeSystemCard(
-                                    storeName = message.storeName,
-                                    message = message.message
-                                )
-                            }
                         }
                         is ChatMessage.UserTransactionCardMessage -> {
                             UserTransactionCard(
@@ -263,6 +263,7 @@ fun ChatScreen(
                         is ChatMessage.IncomingTransactionRequest -> {
                             // Customer-specific messages are rendered in the customer chat detail screen.
                         }
+                        else -> { }
                     }
                 }
 

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,6 +24,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.example.chatpos.ui.screens.ChatHistoryScreen
+import com.example.chatpos.ui.screens.ChatScreen
+import com.example.chatpos.ui.screens.CashDrawerScreen
+import com.example.chatpos.ui.screens.ExpenseChatScreen
+import com.example.chatpos.ui.screens.StockOpnameScreen
+import com.example.chatpos.ui.screens.TransactionHistoryScreen
 import com.example.chatpos.viewmodel.ChatPOSViewModel
 
 @Composable
@@ -30,6 +37,7 @@ fun AppShell(viewModel: ChatPOSViewModel) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var isChatDetailOpen by remember { mutableStateOf(false) }
     var isChatPOSOpen by remember { mutableStateOf(false) }
+    var isExpenseOpen by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Scaffold(
@@ -92,7 +100,13 @@ fun AppShell(viewModel: ChatPOSViewModel) {
         ) {
             when (selectedTab) {
                 0 -> if (isChatPOSOpen) {
-                    ChatScreen(viewModel = viewModel, onBack = { isChatPOSOpen = false })
+                    ChatScreen(
+                        viewModel = viewModel,
+                        onBack = { isChatPOSOpen = false },
+                        onOpenExpenseChat = { isExpenseOpen = true }
+                    )
+                } else if (isExpenseOpen) {
+                    ExpenseChatScreen(viewModel = viewModel, onBack = { isExpenseOpen = false })
                 } else ChatHistoryScreen(
                     viewModel = viewModel,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(),

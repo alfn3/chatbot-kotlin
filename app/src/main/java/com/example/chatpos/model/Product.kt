@@ -53,7 +53,8 @@ object SampleProducts {
         SavedContact("Ahmad Cell", "089512355443", "Grosir"),
         SavedContact("Rian Pulsa", "081234567890", "Pelanggan"),
         SavedContact("Dewi Store", "085298765432", "Pelanggan Tetap"),
-        SavedContact("Kios Barokah", "089566778899", "Langganan")
+        SavedContact("Kios Barokah", "089566778899", "Langganan"),
+        SavedContact("Chat Pengeluaran", "0000000000", "Operasional Konter")
     )
 
     fun findProduct(code: String): ProductItem? {

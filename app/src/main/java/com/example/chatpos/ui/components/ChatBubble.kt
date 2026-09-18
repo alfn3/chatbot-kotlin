@@ -18,7 +18,9 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.Person
@@ -47,11 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chatpos.model.ChatMessage
 import com.example.chatpos.model.formatSavedContactDestination
+import com.example.chatpos.ui.utils.CurrencyFormatter
 import com.example.chatpos.ui.theme.DividerColor
 import com.example.chatpos.ui.theme.PrimaryLight
 import com.example.chatpos.ui.theme.SuccessGreen
-import com.example.chatpos.ui.theme.SuccessGreenBg
-import com.example.chatpos.ui.utils.CurrencyFormatter
 
 // WhatsApp Style Date Divider ("HARI INI")
 @Composable
@@ -147,7 +148,76 @@ fun WelcomeSystemCard(
     }
 }
 
-// User Transaction Card - Menjorok ke kanan (Right-aligned)
+@Composable
+fun ExpenseContactCard(
+    message: ChatMessage.ExpenseContactCard,
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 0.dp)
+            .clickable { onClick() },
+        contentAlignment = Alignment.TopStart
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFFFEF3C7))
+                .border(1.dp, Color(0xFFF59E0B), RoundedCornerShape(16.dp))
+                .padding(14.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFDE68A)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Wallet,
+                        contentDescription = null,
+                        tint = Color(0xFFB45309),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = message.label,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        ),
+                        color = Color(0xFF92400E)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = message.subtitle,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = Color(0xFFB45309)
+                    )
+                    if (message.totalExpense > 0) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Total Hari Ini: ${CurrencyFormatter.formatRupiah(message.totalExpense)}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 10.sp
+                            ),
+                            color = Color(0xFFD97706)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 // Menampilkan output hasil input lebih dahulu, menunggu klik "Proses" baru diteruskan ke sistem OtomaX!
 @Composable
 fun UserTransactionCard(

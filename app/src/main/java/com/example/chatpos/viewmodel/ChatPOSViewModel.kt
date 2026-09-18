@@ -8,7 +8,6 @@ import com.example.chatpos.model.ChatMessage
 import com.example.chatpos.model.CashDenomination
 import com.example.chatpos.model.CashDrawerSummary
 import com.example.chatpos.model.DefaultDenominations
-import com.example.chatpos.model.ExpenseCategories
 import com.example.chatpos.model.OtomaxBatchResult
 import com.example.chatpos.model.OtomaxItemDetail
 import com.example.chatpos.model.OtomaxStatus
@@ -48,7 +47,8 @@ class ChatPOSViewModel : ViewModel() {
             ChatMessage.WelcomeCard(
                 storeName = "TOKO BERKAH CELL",
                 message = "Selamat datang di ChatPOS! Silakan pilih produk di atas atau ketik perintah transaksi (contoh: 5.089512345678)."
-            )
+            ),
+            ChatMessage.ExpenseContactCard()
         )
     )
     val messages = _messages.asStateFlow()
@@ -80,11 +80,9 @@ class ChatPOSViewModel : ViewModel() {
     val selectedProductSubcategory = _selectedProductSubcategory.asStateFlow()
     private val _destinationGroupSize = MutableStateFlow(4)
     val destinationGroupSize = _destinationGroupSize.asStateFlow()
-    val productCategories = (listOf("Pulsa", "Transfer", "Pengeluaran") + SampleProducts.allProducts
+    val productCategories = (listOf("Pulsa", "Transfer") + SampleProducts.allProducts
         .map { it.category }
         .distinct()).distinct()
-
-    val expenseCategories = ExpenseCategories.allCategories
 
     private val _expenseAttachmentState = MutableStateFlow(ChatMessage.ExpenseAttachmentState.NONE)
     val expenseAttachmentState = _expenseAttachmentState.asStateFlow()
@@ -921,9 +919,11 @@ class ChatPOSViewModel : ViewModel() {
     }
 
     // --- FASE 1B: EXPENSE ACTIONS ---
-    fun onExpenseCategorySelected(category: String) {
-        val cmd = "keluar.$category."
-        _inputTextFieldValue.value = TextFieldValue(cmd, TextRange(cmd.length))
+    fun onExpenseContactCardClick() {
+        _inputTextFieldValue.value = TextFieldValue(
+            text = "keluar.",
+            selection = TextRange("keluar.".length)
+        )
     }
 
     fun simulateExpenseAttachmentUpload() {
